@@ -171,3 +171,24 @@ class PMSMMotor:
             field_weakening=fw_active,
             feasible=feasible,
         )
+
+
+def compute_efficiency_map(motor: PMSMMotor, speed_rpm: np.ndarray,
+                           torque_Nm: np.ndarray, bus_voltage_V: float):
+    """Evaluate motor efficiency over a torque-speed grid at a fixed bus voltage.
+
+    Returns ``(efficiency, field_weakening)`` 2D arrays indexed ``[torque, speed]``.
+    Infeasible operating points (voltage/current saturation) are set to NaN in
+    the efficiency array.
+    """
+    speed_rad_s = np.asarray(speed_rpm) * 2.0 * np.pi / 60.0
+    eff = np.full((len(torque_Nm), len(speed_rpm)), np.nan)
+    fw = np.zeros_like(eff, dtype=bool)
+
+    for i, tq in enumerate(torque_Nm):
+        for j, w in enumerate(speed_rad_s):
+            st = motor.operating_point(float(tq), float(w), bus_voltage_V)
+            fw[i, j] = st.field_weakening
+            if st.feasible and st.efficiency > 0:
+                eff[i, j] = st.efficiency
+    return eff, fw

@@ -52,7 +52,11 @@ python scripts/run_full_system.py --mode profile     # one-directional (fast)
 python scripts/run_full_system.py --mode feedback    # bus-voltage feedback
 
 # Cycle-life — multi-mission capacity-fade study (life_degradation preset)
-python scripts/run_degradation_study.py --cycles 5
+python scripts/run_degradation_study.py --cycles 80            # energy-equivalent (fast)
+python scripts/run_degradation_study.py --cycles 5 --full-profile  # exact mission drive cycle
+
+# Motor efficiency map (torque-speed, with field weakening)
+python scripts/export_motor_efficiency_map.py
 ```
 
 ## Motor field weakening
@@ -75,8 +79,15 @@ coefficients (propeller convention `CT = T/(rho n^2 D^4)`,
 
 `scripts/run_degradation_study.py` repeats the mission discharge + CCCV recharge
 under the `life_degradation` preset (OKane2022) and reports the per-cycle
-state-of-health trend plus the capacity-loss breakdown by mechanism (SEI, SEI on
-cracks, lithium plating).
+state-of-health trend (written to `degradation_soh.png`) plus the capacity-loss
+breakdown by mechanism (SEI, SEI on cracks, lithium plating). By default each
+cycle uses an energy-equivalent constant-power discharge so 50-100 cycles run in
+minutes; `--full-profile` replays the exact mission drive cycle (slower, same
+fade to <0.001 %/cycle).
+
+`scripts/export_motor_efficiency_map.py` sweeps the torque-speed plane at the
+nominal bus voltage and writes `motor_efficiency_map.png`, showing the
+efficiency contours, the feasible envelope, and the field-weakening boundary.
 
 Results (CSV + PNG) are written to `data/results/`.
 

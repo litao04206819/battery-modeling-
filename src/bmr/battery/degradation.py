@@ -57,11 +57,20 @@ def run_cycle_life(
     num_cells = config.pack.num_cells
     time_s = np.asarray(time_s, dtype=float)
     cell_power = np.asarray(pack_power_W, dtype=float) / num_cells
-    drive = np.column_stack([time_s - time_s[0], cell_power])
     duration = float(time_s[-1] - time_s[0])
 
+    # A constant discharge is solved as a scalar power step (much faster than a
+    # multi-point drive-cycle interpolant); a varying profile uses the array.
+    if cell_power.size == 1 or np.allclose(cell_power, cell_power.flat[0]):
+        discharge_step = pybamm.step.power(
+            float(cell_power.flat[0]), duration=duration, termination=f"< {v_min} V")
+    else:
+        drive = np.column_stack([time_s - time_s[0], cell_power])
+        discharge_step = pybamm.step.power(
+            drive, duration=duration, termination=f"< {v_min} V")
+
     cycle = (
-        pybamm.step.power(drive, duration=duration, termination=f"< {v_min} V"),
+        discharge_step,
         pybamm.step.string("Rest for 10 minutes"),
         pybamm.step.string(f"Charge at {charge_c_rate}C until {v_max} V"),
         pybamm.step.string(f"Hold at {v_max} V until C/20"),
