@@ -24,8 +24,10 @@ aerofoil:
   cd0: 0.012                  # parasite drag
   cd_induced_k: 0.02          # cd = cd0 + k * cl^2
 
-# Baseline thrust/torque coefficients (used for sanity-check cross validation
-# against BEMT; CT/CQ are non-dimensionalised by rho * n^2 * D^4 / D^5).
+# Measured propeller thrust/torque coefficients used to calibrate the BEMT
+# aerofoil polar (propeller convention: CT = T/(rho n^2 D^4),
+# CQ = Q/(rho n^2 D^5), n in rev/s). Calibration tunes collective pitch (CT)
+# and cd0 (CQ) to match these. Representative values for a loaded 22" prop.
 coefficients:
-  CT: 0.012
-  CQ: 0.0021
+  CT: 0.105
+  CQ: 0.0052

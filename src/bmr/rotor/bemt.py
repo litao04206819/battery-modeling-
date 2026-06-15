@@ -65,6 +65,10 @@ class BEMTRotor:
         self.cd0 = float(af["cd0"])
         self.cd_k = float(af["cd_induced_k"])
 
+        # Collective pitch offset (rad) added to the whole twist distribution.
+        # Used by the CT/CQ calibration; zero by default.
+        self.pitch_offset = 0.0
+
         self.disk_area = np.pi * self.R**2
 
     # ------------------------------------------------------------------
@@ -132,7 +136,7 @@ class BEMTRotor:
         Q = 0.0
         for i in range(self.ne):
             dT, dQ = self._element_inflow(
-                omega, self.r[i], self.chord[i], self.theta[i],
+                omega, self.r[i], self.chord[i], self.theta[i] + self.pitch_offset,
                 self.dr[i], axial_velocity_m_s,
             )
             T += dT
@@ -149,6 +153,23 @@ class BEMTRotor:
             thrust_N=T, torque_Nm=Q, mech_power_W=P,
             rotor_speed_rad_s=omega, figure_of_merit=fom,
         )
+
+    def coefficients(self, rotor_speed_rad_s: float,
+                     axial_velocity_m_s: float = 0.0) -> tuple[float, float]:
+        """Non-dimensional thrust/torque coefficients (CT, CQ) at an operating point.
+
+        Uses the propeller convention CT = T / (rho n^2 D^4),
+        CQ = Q / (rho n^2 D^5) with n the rotation rate in rev/s.
+        """
+        omega = float(rotor_speed_rad_s)
+        n = omega / (2.0 * np.pi)
+        if n <= 0:
+            return 0.0, 0.0
+        D = 2.0 * self.R
+        st = self.solve(omega, axial_velocity_m_s)
+        ct = st.thrust_N / (self.rho * n**2 * D**4)
+        cq = st.torque_Nm / (self.rho * n**2 * D**5)
+        return ct, cq
 
     def thrust_to_speed(self, required_thrust_N: float,
                         axial_velocity_m_s: float = 0.0,

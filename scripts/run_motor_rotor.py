@@ -6,6 +6,7 @@ prints hover sanity checks (thrust vs weight, figure of merit, motor efficiency)
 """
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -20,15 +21,30 @@ from bmr.mission.profile import Mission  # noqa: E402
 from bmr.motor.pmsm import PMSMMotor  # noqa: E402
 from bmr.postprocess.plots import save_system_csv  # noqa: E402
 from bmr.rotor.bemt import BEMTRotor  # noqa: E402
+from bmr.rotor.calibration import calibrate_to_coefficients  # noqa: E402
 
 RESULTS = Path(__file__).resolve().parents[1] / "data" / "results"
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--calibrate", action="store_true",
+                        help="calibrate the BEMT polar to the rotor.yaml CT/CQ first")
+    args = parser.parse_args()
+
+    rotor_cfg = load_yaml("rotor.yaml")
     airframe = Airframe.from_dict(load_yaml("aircraft.yaml"))
-    rotor = BEMTRotor(load_yaml("rotor.yaml"), air_density_kg_m3=airframe.air_density_kg_m3)
+    rotor = BEMTRotor(rotor_cfg, air_density_kg_m3=airframe.air_density_kg_m3)
     motor = PMSMMotor(load_yaml("motor.yaml"))
     mission = Mission.from_dict(load_yaml("mission_hover_cruise.yaml"))
+
+    if args.calibrate:
+        coeffs = rotor_cfg["coefficients"]
+        cal = calibrate_to_coefficients(rotor, coeffs["CT"], coeffs["CQ"])
+        print("--- BEMT calibration to measured CT/CQ ---")
+        print(f"Target  CT={cal.target_CT:.4f}  CQ={cal.target_CQ:.5f}")
+        print(f"Achieved CT={cal.achieved_CT:.4f}  CQ={cal.achieved_CQ:.5f}")
+        print(f"Tuned pitch offset: {cal.pitch_offset_deg:+.2f} deg | cd0: {cal.cd0:.4f}\n")
 
     # Hover sanity check.
     T_hover = airframe.per_rotor_thrust_N(1.0)

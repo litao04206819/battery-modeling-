@@ -19,9 +19,9 @@ mission profile ─► [Rotor BEMT] ─►(T,Q,Ω)─► [Motor PMSM] ─►(P_d
 
 | Subsystem | Module | Fidelity |
 |-----------|--------|----------|
-| Battery   | `bmr.battery` | PyBaMM DFN + lumped thermal + coupled SEI/plating/cracking/LAM ageing |
-| Motor     | `bmr.motor`   | PMSM dq-axis steady state, copper + iron + mechanical losses |
-| Rotor     | `bmr.rotor`   | BEMT with Prandtl tip loss, analytic aerofoil polar |
+| Battery   | `bmr.battery` | PyBaMM DFN + lumped thermal + coupled SEI/plating/cracking/LAM ageing; multi-cycle capacity-fade study |
+| Motor     | `bmr.motor`   | PMSM dq-axis steady state with **field weakening**, copper + iron + mechanical losses, voltage/current limits |
+| Rotor     | `bmr.rotor`   | BEMT with Prandtl tip loss; **CT/CQ calibration** of the aerofoil polar |
 | Airframe  | `bmr.aircraft`| weight → per-rotor thrust trim |
 | Mission   | `bmr.mission` | segment-based profile (hover/climb/cruise/descend) |
 | Coupling  | `bmr.coupling`| profile builder (1-way) + bus-voltage feedback (closed-loop) |
@@ -45,11 +45,38 @@ python scripts/run_battery_only.py
 
 # Stage 2 — rotor + motor demand profile (+ hover sanity check)
 python scripts/run_motor_rotor.py
+python scripts/run_motor_rotor.py --calibrate         # calibrate BEMT polar to CT/CQ first
 
 # Stage 3 — full coupled system over the mission
 python scripts/run_full_system.py --mode profile     # one-directional (fast)
 python scripts/run_full_system.py --mode feedback    # bus-voltage feedback
+
+# Cycle-life — multi-mission capacity-fade study (life_degradation preset)
+python scripts/run_degradation_study.py --cycles 5
 ```
+
+## Motor field weakening
+
+Below the no-load speed the PMSM runs at `id = 0` (MTPA for a surface machine).
+When the required phase voltage exceeds the inverter ceiling
+(`V_phase = V_dc / sqrt(3)` for SVPWM), negative `id` is injected to hold the
+voltage on the limit ellipse. Over-speed / over-torque points that cannot be
+held even at maximum field weakening are flagged `feasible = False`. Disable
+with `field_weakening: false` in `configs/motor.yaml`.
+
+## Rotor calibration
+
+`bmr.rotor.calibration.calibrate_to_coefficients` tunes the collective pitch
+(for CT) and `cd0` (for CQ) so the BEMT prediction matches measured propeller
+coefficients (propeller convention `CT = T/(rho n^2 D^4)`,
+`CQ = Q/(rho n^2 D^5)`). Set the targets in `configs/rotor.yaml`.
+
+## Degradation study
+
+`scripts/run_degradation_study.py` repeats the mission discharge + CCCV recharge
+under the `life_degradation` preset (OKane2022) and reports the per-cycle
+state-of-health trend plus the capacity-loss breakdown by mechanism (SEI, SEI on
+cracks, lithium plating).
 
 Results (CSV + PNG) are written to `data/results/`.
 

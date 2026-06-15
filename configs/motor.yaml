@@ -13,6 +13,12 @@ iron_loss_coeff_hyst: 0.015    # hysteresis loss coefficient (W per (Hz))
 iron_loss_coeff_eddy: 2.0e-5   # eddy-current loss coefficient (W per (Hz^2))
 mechanical_loss_coeff: 1.0e-4  # viscous/bearing loss (N.m.s/rad)
 
+# Inverter
+inverter_efficiency: 0.97
+
+# Control
+field_weakening: true          # inject negative id when voltage-limited
+
 # Limits
 max_phase_current_A: 120.0
 max_line_voltage_V: 50.0
