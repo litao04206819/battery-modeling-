@@ -1,0 +1,45 @@
+# Battery configuration for the PyBaMM DFN model.
+#
+# Two presets are provided. Select one via `preset:`.
+#   - high_rate_thermal : Chen2020/ORegan2022 + lumped thermal. Best for
+#                         hover/climb high-C-rate thermal performance studies.
+#   - life_degradation  : OKane2022 + full coupled-degradation option set.
+#                         Best for mission-life / ageing studies (slower).
+
+preset: high_rate_thermal
+
+presets:
+  high_rate_thermal:
+    parameter_set: Chen2020        # or ORegan2022 for measured thermal/transport data
+    options:
+      thermal: lumped
+    # Initial conditions / ambient
+    initial_soc: 1.0
+    ambient_temperature_K: 298.15
+
+  life_degradation:
+    parameter_set: OKane2022
+    options:
+      SEI: solvent-diffusion limited
+      SEI porosity change: "true"
+      SEI on cracks: "true"
+      lithium plating: partially reversible
+      lithium plating porosity change: "true"
+      particle mechanics: swelling and cracking
+      loss of active material: stress-driven
+      thermal: lumped
+    initial_soc: 1.0
+    ambient_temperature_K: 298.15
+
+# Pack topology. PyBaMM solves ONE representative cell; the coupling layer scales
+# pack voltage = cell_voltage * series, pack current = cell_current * parallel.
+pack:
+  series: 12          # cells in series  -> sets nominal bus voltage (~12 * 3.7 = 44.4 V)
+  parallel: 8         # strings in parallel -> sets pack capacity / current sharing
+
+# Parameter overrides applied on top of the chosen PyBaMM parameter set.
+# Keys must be valid PyBaMM parameter names, e.g. "Ambient temperature [K]".
+overrides: {}
+
+# Default solver: idaklu (fast for stiff thermal+ageing DAE) or casadi (robust fallback).
+solver: idaklu

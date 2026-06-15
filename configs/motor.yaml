@@ -1,0 +1,18 @@
+# PMSM (permanent-magnet synchronous motor) configuration.
+# Representative of a mid-size multirotor / eVTOL propulsion motor.
+
+# Electrical
+pole_pairs: 14                 # typical outrunner drone motor
+kv_rpm_per_volt: 120.0         # speed constant (rpm/V), no-load
+phase_resistance_ohm: 0.045    # per-phase stator resistance Rs
+d_axis_inductance_H: 5.0e-5    # Ld
+q_axis_inductance_H: 5.0e-5    # Lq (surface PMSM: Ld ~= Lq)
+
+# Loss model
+iron_loss_coeff_hyst: 0.015    # hysteresis loss coefficient (W per (Hz))
+iron_loss_coeff_eddy: 2.0e-5   # eddy-current loss coefficient (W per (Hz^2))
+mechanical_loss_coeff: 1.0e-4  # viscous/bearing loss (N.m.s/rad)
+
+# Limits
+max_phase_current_A: 120.0
+max_line_voltage_V: 50.0

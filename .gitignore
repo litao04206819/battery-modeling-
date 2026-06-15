@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# Simulation outputs
+data/results/*
+!data/results/.gitkeep
+
+# PyBaMM artifacts
+*.pickle
+*.mat
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/

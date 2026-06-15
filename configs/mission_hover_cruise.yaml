@@ -1,0 +1,48 @@
+# Mission profile: a sequence of segments. Each segment specifies a duration and
+# a flight condition. The coupling layer turns these into a per-rotor thrust /
+# rotor speed demand and ultimately a battery power profile.
+#
+# Segment `type` options:
+#   hover  : net thrust = weight (climb_rate = 0)
+#   climb  : thrust > weight to accelerate/sustain climb_rate
+#   cruise : forward flight at given airspeed (induced inflow + parasite)
+#   descend: thrust < weight
+#
+# `thrust_factor` multiplies aircraft weight to set the total thrust demand for a
+# segment (1.0 == hover). For cruise, airspeed_m_s sets the forward inflow.
+
+time_step_s: 1.0            # discretisation step for profile + battery solve
+
+segments:
+  - name: takeoff_hover
+    type: hover
+    duration_s: 30
+    thrust_factor: 1.0
+
+  - name: climb
+    type: climb
+    duration_s: 60
+    thrust_factor: 1.25
+    climb_rate_m_s: 3.0
+
+  - name: cruise
+    type: cruise
+    duration_s: 300
+    thrust_factor: 1.05
+    airspeed_m_s: 15.0
+
+  - name: loiter_hover
+    type: hover
+    duration_s: 120
+    thrust_factor: 1.0
+
+  - name: descend
+    type: descend
+    duration_s: 60
+    thrust_factor: 0.85
+    climb_rate_m_s: -2.0
+
+  - name: landing_hover
+    type: hover
+    duration_s: 30
+    thrust_factor: 1.0

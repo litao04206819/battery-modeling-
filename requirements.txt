@@ -1,0 +1,12 @@
+# Core scientific stack
+numpy>=1.24
+scipy>=1.10
+matplotlib>=3.7
+pandas>=2.0
+pyyaml>=6.0
+
+# Battery electrochemistry (DFN). Pinned to a known-good line for reproducibility.
+# PyBaMM >=24.5 exposes pybamm.step.power / IDAKLUSolver / "Voltage [V]" output naming.
+pybamm>=24.5
+
+# Optional: faster DAE solving (IDAKLU is bundled with pybamm wheels).

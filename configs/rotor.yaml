@@ -1,0 +1,31 @@
+# Rotor / propeller configuration for blade-element momentum theory (BEMT).
+# Representative of a multirotor propeller.
+
+geometry:
+  diameter_m: 0.5588          # 22 inch propeller
+  num_blades: 2
+  root_cutout_frac: 0.15      # blade starts at 15% radius
+  num_elements: 20            # radial discretisation for BEMT
+
+# Chord and twist distribution along non-dimensional radius r/R.
+# Linear taper + linear twist (degrees). Values at root and tip.
+chord:
+  root_m: 0.055
+  tip_m: 0.025
+twist:
+  root_deg: 22.0
+  tip_deg: 8.0
+
+# 2D aerofoil polar (linear lift, quadratic drag) — simple analytic model.
+aerofoil:
+  cl_alpha_per_rad: 5.9       # lift-curve slope
+  alpha_0_deg: -2.0           # zero-lift angle of attack
+  cl_max: 1.4                 # stall clamp
+  cd0: 0.012                  # parasite drag
+  cd_induced_k: 0.02          # cd = cd0 + k * cl^2
+
+# Baseline thrust/torque coefficients (used for sanity-check cross validation
+# against BEMT; CT/CQ are non-dimensionalised by rho * n^2 * D^4 / D^5).
+coefficients:
+  CT: 0.012
+  CQ: 0.0021

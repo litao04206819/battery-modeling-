@@ -1,0 +1,15 @@
+# Airframe-level configuration for a multirotor / eVTOL.
+
+mass_kg: 12.0              # all-up mass (incl. battery + payload)
+num_rotors: 4             # quadrotor
+gravity_m_s2: 9.80665
+
+# Air properties (sea-level ISA by default).
+air_density_kg_m3: 1.225
+
+# Bus / pack nominal voltage used to seed the one-directional profile build
+# (the optional feedback loop replaces this with the battery terminal voltage).
+nominal_bus_voltage_V: 44.4
+
+# Figure-of-merit floor used only for sanity checks in tests.
+min_hover_figure_of_merit: 0.5
