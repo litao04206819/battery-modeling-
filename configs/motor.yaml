@@ -4,14 +4,15 @@
 # Electrical
 pole_pairs: 14                 # typical outrunner drone motor
 kv_rpm_per_volt: 120.0         # speed constant (rpm/V), no-load
-phase_resistance_ohm: 0.045    # per-phase stator resistance Rs
+phase_resistance_ohm: 0.0184   # per-phase stator resistance Rs
 d_axis_inductance_H: 5.0e-5    # Ld
 q_axis_inductance_H: 5.0e-5    # Lq (surface PMSM: Ld ~= Lq)
 
-# Loss model
-iron_loss_coeff_hyst: 0.015    # hysteresis loss coefficient (W per (Hz))
-iron_loss_coeff_eddy: 2.0e-5   # eddy-current loss coefficient (W per (Hz^2))
-mechanical_loss_coeff: 1.0e-4  # viscous/bearing loss (N.m.s/rad)
+# Loss model. These values were calibrated to the efficiency_targets below
+# (export_motor_efficiency_map.py --calibrate); peak efficiency ~91 %.
+iron_loss_coeff_hyst: 0.0252   # hysteresis loss coefficient (W per (Hz))
+iron_loss_coeff_eddy: 1.0e-8   # eddy-current loss coefficient (W per (Hz^2))
+mechanical_loss_coeff: 8.085e-5  # viscous/bearing loss (N.m.s/rad)
 
 # Inverter
 inverter_efficiency: 0.97
@@ -22,3 +23,17 @@ field_weakening: true          # inject negative id when voltage-limited
 # Limits
 max_phase_current_A: 120.0
 max_line_voltage_V: 50.0
+
+# Representative measured efficiency points (dyno / datasheet) used to calibrate
+# the loss coefficients (phase resistance + iron + mechanical) so the efficiency
+# map matches a real high-performance drone motor (peak ~92-93 %).
+# Each point is [speed_rpm, torque_Nm, efficiency].
+efficiency_targets:
+  bus_voltage_V: 44.4
+  points:
+    - [2000, 1.0, 0.86]
+    - [3000, 1.5, 0.90]
+    - [3800, 2.2, 0.92]
+    - [4300, 2.8, 0.925]
+    - [4800, 1.0, 0.89]
+    - [2800, 4.5, 0.88]

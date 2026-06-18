@@ -7,6 +7,7 @@ contour map plus the underlying CSV.
 """
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -16,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from bmr.aircraft.airframe import Airframe  # noqa: E402
 from bmr.config import load_yaml  # noqa: E402
+from bmr.motor.calibration import calibrate_loss_coefficients  # noqa: E402
 from bmr.motor.pmsm import PMSMMotor, compute_efficiency_map  # noqa: E402
 from bmr.postprocess.plots import plot_efficiency_map, save_system_csv  # noqa: E402
 
@@ -23,9 +25,31 @@ RESULTS = Path(__file__).resolve().parents[1] / "data" / "results"
 
 
 def main() -> None:
-    motor = PMSMMotor(load_yaml("motor.yaml"))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--calibrate", action="store_true",
+                        help="fit the loss coefficients to motor.yaml's "
+                             "efficiency_targets before mapping")
+    args = parser.parse_args()
+
+    motor_cfg = load_yaml("motor.yaml")
+    motor = PMSMMotor(motor_cfg)
     airframe = Airframe.from_dict(load_yaml("aircraft.yaml"))
     bus_v = airframe.nominal_bus_voltage_V
+    tag = "raw"
+
+    if args.calibrate:
+        targets = motor_cfg["efficiency_targets"]
+        points = [tuple(p) for p in targets["points"]]
+        cal = calibrate_loss_coefficients(
+            motor, points, targets.get("bus_voltage_V", bus_v))
+        tag = "calibrated"
+        print("--- Loss-coefficient calibration ---")
+        print(f"Rs={cal.Rs:.4f} ohm | k_h={cal.k_h:.4f} | k_e={cal.k_e:.3e} | "
+              f"c_mech={cal.c_mech:.3e}")
+        print(f"Peak efficiency: {cal.peak_efficiency_before*100:.1f}% -> "
+              f"{cal.peak_efficiency_after*100:.1f}%")
+        print(f"Fit RMS error: {cal.rms_efficiency_error*100:.2f}% | "
+              f"max: {cal.max_efficiency_error*100:.2f}%\n")
 
     # No-load speed at the bus voltage sets the upper end (go a bit beyond to
     # show the field-weakening region).
@@ -47,13 +71,13 @@ def main() -> None:
     print(f"Field-weakening points: {fw.sum()}")
 
     out_png = plot_efficiency_map(
-        RESULTS / "motor_efficiency_map.png", speed_rpm, torque_Nm, eff, fw,
-        title=f"PMSM efficiency map (bus = {bus_v:.0f} V, with field weakening)",
+        RESULTS / f"motor_efficiency_map_{tag}.png", speed_rpm, torque_Nm, eff, fw,
+        title=f"PMSM efficiency map ({tag}, bus = {bus_v:.0f} V, with field weakening)",
     )
 
     # Flatten to long-form CSV.
     S, T = np.meshgrid(speed_rpm, torque_Nm)
-    save_system_csv(RESULTS / "motor_efficiency_map.csv", {
+    save_system_csv(RESULTS / f"motor_efficiency_map_{tag}.csv", {
         "speed_rpm": S.ravel(),
         "torque_Nm": T.ravel(),
         "efficiency": eff.ravel(),

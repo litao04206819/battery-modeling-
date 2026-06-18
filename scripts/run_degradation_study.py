@@ -84,6 +84,7 @@ def main() -> None:
         for key, vals in result.loss_breakdown_Ah.items():
             print(f"  {key}: {vals[-1]:.5f} A.h")
 
+    tag = "full" if args.full_profile else "representative"
     columns = {
         "cycle_number": result.cycle_number,
         "capacity_Ah": result.capacity_Ah,
@@ -91,12 +92,12 @@ def main() -> None:
     }
     for key, vals in result.loss_breakdown_Ah.items():
         columns[key] = vals
-    save_system_csv(RESULTS / "degradation_study.csv", columns)
+    save_system_csv(RESULTS / f"degradation_study_{tag}.csv", columns)
     plot_soh_curve(
-        RESULTS / "degradation_soh.png",
+        RESULTS / f"degradation_soh_{tag}.png",
         result.cycle_number, result.soh_percent, result.loss_breakdown_Ah,
     )
-    print(f"\nWrote results to {RESULTS}")
+    print(f"\nWrote results to {RESULTS} (tag: {tag})")
 
 
 if __name__ == "__main__":
